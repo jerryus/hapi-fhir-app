@@ -1,4 +1,5 @@
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
 
@@ -21,31 +22,43 @@ public class SampleClient {
 		FhirContext fhirContext = FhirContext.forR4();
 		IGenericClient client = fhirContext.newRestfulGenericClient("http://hapi.fhir.org/baseR4");
 		client.registerInterceptor(new LoggingInterceptor(false));
+		client.registerInterceptor(new IClientInterceptor());
 		
-		int taskNum = 2;
+		int task = 2;			
 		
-		// task 1
-		if(taskNum == 1) 
+		if(task == 1) // task 1
 		{					
 			String lastName = "SMITH";
-			doTaskOne(client, lastName);
-		}
-		// task 2
-		else if(taskNum == 2) 
-		{				
-			doTaskTwo(client);
+			doTaskOne(client, lastName, false);
+		}		
+		else if(task == 2) // task 2
+		{
+			List<Long> times = new ArrayList<>();
+			
+			// run #1 
+			times.add(doTaskTwo(client, false));
+			
+			// run #2
+			times.add(doTaskTwo(client, false));
+			
+			// run #3
+			times.add(doTaskTwo(client, true));
+			
+			System.out.println("Task 2 execution times for 3 runs : " + times + " in milliseconds");
 		}
 		else 
 		{
-			System.out.println("No task found for task numbr : " + taskNum);
+			System.out.println("No task found for task numbr : " + task);
 		}		
 	}
 	
-	public static void doTaskOne(IGenericClient client, String lastName) {
-
-		// Search for Patient resources
-		Bundle response = client.search().forResource("Patient").where(Patient.FAMILY.matches().value(lastName)).returnBundle(Bundle.class).execute();
-
+	public static void doTaskOne(IGenericClient client, String lastName, boolean isNoCache) {	
+		
+		CacheControlDirective cacheControlDirective = new CacheControlDirective();
+		cacheControlDirective.setNoCache(isNoCache);				
+		
+		Bundle response = client.search().forResource("Patient").cacheControl(cacheControlDirective).where(Patient.FAMILY.matches().value(lastName)).returnBundle(Bundle.class).execute();
+		
 		if (!response.isEmpty()) 
 		{
 			List<Patient> pList = new ArrayList<>();
@@ -58,26 +71,26 @@ public class SampleClient {
 			
 			Collections.sort(pList, (p1, p2) -> (p1.getNameFirstRep().getGivenAsSingleString().compareTo(p2.getNameFirstRep().getGivenAsSingleString())));
 
-			System.out.println("\nName & DOB for patient with last name : " + lastName + "\n");
+			System.out.println("\nNAME & DOB OF PATIENT WITH LAST NAME : " + lastName);
 			pList.forEach(p -> System.out.println(p.getNameFirstRep().getGivenAsSingleString() + " " + p.getNameFirstRep().getFamily() + " | " + (p.getBirthDate() != null ? p.getBirthDate() : "Not available")));
 		}
 	}
 	
-	public static void doTaskTwo(IGenericClient client) {
+	public static long doTaskTwo(IGenericClient client, boolean isNoCache) {
 		
-		List<String> lastNames = null;
+		long startTime = 0L;
+		long endTime = 0L;
 		
-		try 
-		{
-			lastNames = getLastNames();			
-			lastNames.forEach(lastName -> doTaskOne(client, lastName));
-			
+		try {			
+			List<String> lastNames = getLastNames();			
+			startTime = System.currentTimeMillis();
+			lastNames.forEach(lastName -> doTaskOne(client, lastName, isNoCache));
+			endTime = System.currentTimeMillis();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} 		
 		
-		System.out.println(lastNames);
-		
+		return (endTime - startTime);	
 	}
 	
 	public static List<String> getLastNames() throws IOException {
