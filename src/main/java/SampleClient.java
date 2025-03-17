@@ -23,42 +23,41 @@ public class SampleClient {
 		IGenericClient client = fhirContext.newRestfulGenericClient("http://hapi.fhir.org/baseR4");
 		client.registerInterceptor(new LoggingInterceptor(false));
 		client.registerInterceptor(new IClientInterceptor());
-		
-		int task = 2;			
-		
-		if(task == 1) // task 1
-		{					
+
+		int task = 2;
+
+		if (task == 1) // task 1
+		{
 			String lastName = "SMITH";
 			doTaskOne(client, lastName, false);
-		}		
-		else if(task == 2) // task 2
+		} 
+		else if (task == 2) // task 2
 		{
 			List<Long> times = new ArrayList<>();
-			
-			// run #1 
+
+			// run #1
 			times.add(doTaskTwo(client, false));
-			
+
 			// run #2
 			times.add(doTaskTwo(client, false));
-			
+
 			// run #3
 			times.add(doTaskTwo(client, true));
-			
-			System.out.println("Task 2 execution times for 3 runs : " + times + " in milliseconds");
-		}
-		else 
-		{
+
+			System.out.println("===================================================================================");
+			System.out.println("  Task 2 execution times for the 3 runs : " + times + " in milliseconds");
+			System.out.println("===================================================================================");
+		} 
+		else {
 			System.out.println("No task found for task numbr : " + task);
-		}		
+		}
 	}
-	
-	public static void doTaskOne(IGenericClient client, String lastName, boolean isNoCache) {	
-		
-		CacheControlDirective cacheControlDirective = new CacheControlDirective();
-		cacheControlDirective.setNoCache(isNoCache);				
-		
-		Bundle response = client.search().forResource("Patient").cacheControl(cacheControlDirective).where(Patient.FAMILY.matches().value(lastName)).returnBundle(Bundle.class).execute();
-		
+
+	public static void doTaskOne(IGenericClient client, String lastName, boolean noCache) {
+
+		Bundle response = client.search().forResource("Patient").where(Patient.FAMILY.matches().value(lastName))
+				.returnBundle(Bundle.class).cacheControl(new CacheControlDirective().setNoCache(noCache)).execute();
+
 		if (!response.isEmpty()) 
 		{
 			List<Patient> pList = new ArrayList<>();
@@ -68,45 +67,48 @@ public class SampleClient {
 					pList.add((Patient) entry.getResource());
 				}
 			});
-			
-			Collections.sort(pList, (p1, p2) -> (p1.getNameFirstRep().getGivenAsSingleString().compareTo(p2.getNameFirstRep().getGivenAsSingleString())));
+
+			Collections.sort(pList, (p1, p2) -> (p1.getNameFirstRep().getGivenAsSingleString()
+					.compareTo(p2.getNameFirstRep().getGivenAsSingleString())));
 
 			System.out.println("\nNAME & DOB OF PATIENT WITH LAST NAME : " + lastName);
-			pList.forEach(p -> System.out.println(p.getNameFirstRep().getGivenAsSingleString() + " " + p.getNameFirstRep().getFamily() + " | " + (p.getBirthDate() != null ? p.getBirthDate() : "Not available")));
+			pList.forEach(p -> System.out
+					.println(p.getNameFirstRep().getGivenAsSingleString() + " " + p.getNameFirstRep().getFamily()
+							+ " | " + (p.getBirthDate() != null ? p.getBirthDate() : "Not available")));
 		}
 	}
-	
-	public static long doTaskTwo(IGenericClient client, boolean isNoCache) {
-		
+
+	public static long doTaskTwo(IGenericClient client, boolean noCache) {
+
 		long startTime = 0L;
 		long endTime = 0L;
-		
-		try {			
-			List<String> lastNames = getLastNames();			
+
+		try {
+			List<String> lastNames = getLastNames();
 			startTime = System.currentTimeMillis();
-			lastNames.forEach(lastName -> doTaskOne(client, lastName, isNoCache));
+			lastNames.forEach(lastName -> doTaskOne(client, lastName, noCache));
 			endTime = System.currentTimeMillis();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 		
-		
-		return (endTime - startTime);	
-	}
-	
-	public static List<String> getLastNames() throws IOException {
-		
-		List<String> lastNameList = new ArrayList<>();
-		
-		try (InputStream is = SampleClient.class.getClassLoader().getResourceAsStream("lastnames.txt");
-			 InputStreamReader streamReader = new InputStreamReader(is);
-			 BufferedReader reader = new BufferedReader(streamReader)) {
-			String line;
-            while ((line = reader.readLine()) != null) {
-                lastNameList.add(line);
-            }
 		}
-		
-		return lastNameList;		
+
+		return (endTime - startTime);
 	}
-	
+
+	public static List<String> getLastNames() throws IOException {
+
+		List<String> lastNameList = new ArrayList<>();
+
+		try (InputStream is = SampleClient.class.getClassLoader().getResourceAsStream("lastnames.txt");
+				InputStreamReader streamReader = new InputStreamReader(is);
+				BufferedReader reader = new BufferedReader(streamReader)) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				lastNameList.add(line);
+			}
+		}
+
+		return lastNameList;
+	}
+
 }
