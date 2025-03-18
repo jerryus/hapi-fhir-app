@@ -1,4 +1,4 @@
-package myapp;
+package app;
 import java.io.IOException;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;

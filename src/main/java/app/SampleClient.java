@@ -1,4 +1,4 @@
-package myapp;
+package app;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
@@ -19,34 +19,41 @@ import org.hl7.fhir.r4.model.Patient;
 public class SampleClient {
 
 	public static void main(String[] theArgs) throws InterruptedException {
+		
+		SampleClient sampleClient = new SampleClient();
 
+		// Task one
+		String lastName = "SMITH";
+		sampleClient.getPatientsByLastName(lastName, false);
+		
+		// Task Two		
+		List<String> lastNames = sampleClient.getLastNamesFromFile("lastnames.txt");
+		
+		long run1 = sampleClient.getPatientsByLastNames(lastNames, false);
+		Thread.sleep(3000);
+		long run2 = sampleClient.getPatientsByLastNames(lastNames, false);
+		Thread.sleep(3000);
+		long run3 = sampleClient.getPatientsByLastNames(lastNames, true);
+		
+		System.out.println("===================================================================================================");
+		System.out.println("  Task 2 execution times for the 3 runs : [" + run1 + ", " + run2 + ", " + run3 + "] in milliseconds");
+		System.out.println("===================================================================================================");		
+	}	
+	
+	private IGenericClient getIGenericClient() {
+		
 		// Create a FHIR client
 		FhirContext fhirContext = FhirContext.forR4();
 		IGenericClient client = fhirContext.newRestfulGenericClient("http://hapi.fhir.org/baseR4");
 		client.registerInterceptor(new LoggingInterceptor(false));
 		client.registerInterceptor(new TimeClientInterceptor());
-
-		// Task one
-		String lastName = "SMITH";
-		getPatientsByLastName(client, lastName, false);
 		
-		// Task Two		
-		List<String> lastNames = getLastNamesFromFile("lastnames.txt");
-		
-		long run1 = getPatientsByLastNames(client, lastNames, false);
-		Thread.sleep(3000);
-		long run2 = getPatientsByLastNames(client, lastNames, false);
-		Thread.sleep(3000);
-		long run3 = getPatientsByLastNames(client, lastNames, true);
-		
-		System.out.println("===================================================================================================");
-		System.out.println("  Task 2 execution times for the 3 runs : [" + run1 + ", " + run2 + ", " + run3 + "] in milliseconds");
-		System.out.println("===================================================================================================");		
+		return client;		
 	}
 	
-	private static void getPatientsByLastName(IGenericClient client, String lastName, boolean noCache) {
+	public void getPatientsByLastName(String lastName, boolean noCache) {
 		
-		List<Patient> pList = findPatientsWithLastName(client, lastName, false);		
+		List<Patient> pList = findPatientsWithLastName(lastName, false);		
 		
 		System.out.println("\n *** NAME & DOB FOR PATIENT : " + lastName);
 
@@ -55,19 +62,21 @@ public class SampleClient {
 						+ (p.getBirthDate() != null ? p.getBirthDate() : "Not available")));		
 	}
 	
-	private static long getPatientsByLastNames(IGenericClient client, List<String> lastNames, boolean noCache) {
+	public long getPatientsByLastNames(List<String> lastNames, boolean noCache) {
 		
 		long startTime = 0L;
 		long endTime = 0L;
 		
 		startTime = System.currentTimeMillis();
-		lastNames.forEach( name -> getPatientsByLastName(client, name, noCache));
+		lastNames.forEach( name -> getPatientsByLastName(name, noCache));
 		endTime = System.currentTimeMillis();	
 		
 		return (endTime - startTime);		
 	}		
 	
-	private static List<Patient> findPatientsWithLastName(IGenericClient client, String lastName, boolean noCache) {
+	public List<Patient> findPatientsWithLastName(String lastName, boolean noCache) {
+		
+		IGenericClient client = getIGenericClient();
 
 		List<Patient> pList = new ArrayList<>();
 
@@ -88,7 +97,7 @@ public class SampleClient {
 		return pList;
 	}
 
-	private static List<String> getLastNamesFromFile(String fileName) {
+	private List<String> getLastNamesFromFile(String fileName) {
 
 		List<String> lastNameList = new ArrayList<>();
 
