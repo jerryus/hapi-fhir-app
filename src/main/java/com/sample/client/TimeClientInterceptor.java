@@ -1,4 +1,4 @@
-package app;
+package com.sample.client;
 import java.io.IOException;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
@@ -21,9 +21,9 @@ public class TimeClientInterceptor implements IClientInterceptor
 	{
 		long endTime = theResponse.getRequestStopWatch().getMillis();
 		
-		System.out.println("====================================");
-		System.out.println("  Request-Response Time : " + endTime);
-		System.out.println("====================================");		
+		System.out.println("---------------------------------------------------");
+		System.out.println("      Request-Response Time : " + endTime + " ms   ");
+		System.out.println("---------------------------------------------------");		
 	}
 
 }
