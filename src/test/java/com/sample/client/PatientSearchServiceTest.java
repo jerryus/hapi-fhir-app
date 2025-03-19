@@ -100,7 +100,7 @@ public class PatientSearchServiceTest {
 		PatientSearchService mockService = mock(PatientSearchService.class);		
 		IGenericClient mockClient = mock(IGenericClient.class);
 		
-		// mock the client call to search
+		// mock the chained client search method
 		IUntypedQuery<IBaseBundle> mockIUntypedQuery = mock(IUntypedQuery.class);		
 		when(mockClient.search()).thenReturn(mockIUntypedQuery);
 		

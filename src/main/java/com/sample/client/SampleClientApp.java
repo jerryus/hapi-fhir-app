@@ -16,7 +16,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SampleClientApp implements CommandLineRunner {
 	
 	@Autowired
-	private PatientSearchService service;
+	private final PatientSearchService service;
+	
+	public SampleClientApp(PatientSearchService service) {
+		this.service = service;
+	}
 	
 	public static void main(String[] args) {
 		SpringApplication.run(SampleClientApp.class, args);

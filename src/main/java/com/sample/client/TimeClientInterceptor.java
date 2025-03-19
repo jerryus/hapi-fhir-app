@@ -10,20 +10,29 @@ import ca.uhn.fhir.util.StopWatch;
 @Interceptor
 public class TimeClientInterceptor implements IClientInterceptor 
 {
+	private StopWatch stopWatch;	
+
 	@Override
 	public void interceptRequest(IHttpRequest theRequest) 
 	{
-		new StopWatch(System.currentTimeMillis());		
+		this.setStopWatch(new StopWatch(System.currentTimeMillis()));		
 	}
 
 	@Override
 	public void interceptResponse(IHttpResponse theResponse) throws IOException 
 	{
-		long endTime = theResponse.getRequestStopWatch().getMillis();
+		this.setStopWatch(theResponse.getRequestStopWatch());
 		
-		System.out.println("---------------------------------------------------");
-		System.out.println("      Request-Response Time : " + endTime + " ms   ");
-		System.out.println("---------------------------------------------------");		
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("  Request-Response Time : " + this.stopWatch.getMillis() + " ms   ");
+		System.out.println("------------------------------------------------------------------");		
 	}
 
+	public StopWatch getStopWatch() {
+		return stopWatch;
+	}
+
+	public void setStopWatch(StopWatch stopWatch) {
+		this.stopWatch = stopWatch;
+	}
 }
